@@ -1,0 +1,9 @@
+# Ignore __pycache__ directory everywhere
+__pycache__/
+
+# Ignore everything in OUTPUT directory except the README file
+OUTPUT/*
+!OUTPUT/README
+
+# Ignore all mp4 videos
+*.mp4
