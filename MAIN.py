@@ -1,4 +1,5 @@
 # USAGE
+# python MAIN.py
 # python MAIN.py --input pedestrians.mp4
 # python MAIN.py --input pedestrians.mp4 --output output.avi
 
@@ -7,6 +8,7 @@ import config   # the file config.py
 from social_distance_detector import SD_detector
 from mask_detector import M_detector
 from tensorflow.keras.models import load_model
+from datetime import datetime
 import argparse
 import cv2
 import os
@@ -61,6 +63,7 @@ ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 print("[INFO] accessing video stream...")
 vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 writer = None
+counter = 0
 
 # loop over the frames from the video stream
 while True:
@@ -101,4 +104,10 @@ while True:
     # ---------------------- CALL MASK DETECTOR ------------------------
     # if violate > 0
     if len(sd_result[1]):
-        M_detector(frame, faceNet, maskNet)
+        # images of mask violators
+        image = M_detector(frame, faceNet, maskNet)
+
+        # save the image as a JPEG file
+        name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
+        cv2.imwrite("%s.jpg" % name, image)
+        counter += 1

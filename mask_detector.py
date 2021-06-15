@@ -2,7 +2,6 @@
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from imutils.video import VideoStream
-from datetime import datetime
 import numpy as np
 import imutils
 import time
@@ -102,7 +101,4 @@ def M_detector(frame, faceNet, maskNet):
             cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
-
-    # save the frame as a JPEG file
-    name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S"))
-    cv2.imwrite("%s.jpg" % name, frame)
+    return frame
