@@ -69,20 +69,18 @@ counter = 0
 while True:
     # read the next frame from the file
     (grabbed, frame) = vs.read()
-
     # if the frame was not grabbed, then we have reached the end of the stream
     if not grabbed:
         break
 
     # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
-    # sd_result=[frame, violate]
-    sd_result = SD_detector(args, net, ln, personIdx, frame)
+    (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
 
     # --------------------- DISPLAY SOCIAL DISTANCE VIDEO ----------------
     # check to see if the output frame should be displayed to our screen
     if args["display"] > 0:
         # show the output frame
-        cv2.imshow("Frame", sd_result[0])
+        cv2.imshow("Frame", sd_frame)
         key = cv2.waitKey(1) & 0xFF
 
         # if the `q` key was pressed, break from the loop
@@ -95,19 +93,21 @@ while True:
         # initialize our video writer
         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
         writer = cv2.VideoWriter(args["output"], fourcc, 25,
-	(sd_result[0].shape[1], sd_result[0].shape[0]), True)
+	(sd_frame.shape[1], sd_frame.shape[0]), True)
 
     # if the video writer is not None, write the frame to the output video file
     if writer is not None:
-        writer.write(sd_result[0])
+        writer.write(sd_frame)
 
     # ---------------------- CALL MASK DETECTOR ------------------------
-    # if violate > 0
-    if len(sd_result[1]):
-        # images of mask violators
-        image = M_detector(frame, faceNet, maskNet)
+    # loop through the images of social distance violators
+    for i in sd_images:
+        # proceed only if the image is bigger than 1x1
+        if i.shape[0] > 1 and i.shape[1] > 1:
+            # get images of mask violators
+            SDFM_image = M_detector(i, faceNet, maskNet)
 
-        # save the image as a JPEG file
-        name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
-        cv2.imwrite("%s.jpg" % name, image)
-        counter += 1
+            # save the image as a JPEG file
+            name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
+            cv2.imwrite("%s.jpg" % name, SDFM_image)
+            counter += 1
