@@ -5,7 +5,6 @@ from scipy.spatial import distance as dist
 import numpy as np
 import imutils
 import cv2
-import os
 
 def SD_detector(net, ln, personIdx, frame):
     # resize the frame and then detect people (and only people) in it
@@ -38,8 +37,7 @@ def SD_detector(net, ln, personIdx, frame):
 
     # loop over the results
     for (i, (prob, bbox, centroid)) in enumerate(results):
-        # extract the bounding box and centroid coordinates, then
-	# initialize the color of the annotation
+        # extract the bounding box and centroid coordinates, then initialize the color
         (startX, startY, endX, endY) = bbox
         (cX, cY) = centroid
         color = (0, 255, 0)

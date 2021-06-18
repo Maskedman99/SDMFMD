@@ -9,6 +9,7 @@ from social_distance_detector import SD_detector
 from mask_detector import M_detector
 from tensorflow.keras.models import load_model
 from datetime import datetime
+from imutils.video import FPS
 import argparse
 import cv2
 import os
@@ -65,6 +66,9 @@ vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
 writer = None
 counter = 0
 
+# start the FPS counter
+fps = FPS().start()
+
 # loop over the frames from the video stream
 while True:
     # read the next frame from the file
@@ -75,6 +79,21 @@ while True:
 
     # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
     (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
+
+    # ------------------- CALL FACE-MASK DETECTOR ------------------------
+    # loop through the images of social distance violators
+    for i in sd_images:
+        # proceed only if the image is bigger than 1x1
+        if i.shape[0] > 1 and i.shape[1] > 1:
+            # get the image of mask violator's face
+            SDFM_image = M_detector(i, faceNet, maskNet)
+
+            # proceed only if SDFM_image is defined
+            if SDFM_image is not None:
+                # save the image as a JPEG file
+                name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
+                cv2.imwrite("%s.jpg" % name, SDFM_image)
+                counter += 1
 
     # ----------------- DISPLAY/WRITE SOCIAL DISTANCE VIDEO --------------
     # check to see if the output frame should be displayed to our screen
@@ -99,17 +118,14 @@ while True:
     if writer is not None:
         writer.write(sd_frame)
 
-    # ---------------------- CALL MASK DETECTOR ------------------------
-    # loop through the images of social distance violators
-    for i in sd_images:
-        # proceed only if the image is bigger than 1x1
-        if i.shape[0] > 1 and i.shape[1] > 1:
-            # get the image of mask violator's face
-            SDFM_image = M_detector(i, faceNet, maskNet)
+    # update the FPS counter
+    fps.update()
 
-            # proceed only if SDFM_image is defined
-            if SDFM_image is not None:
-                # save the image as a JPEG file
-                name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
-                cv2.imwrite("%s.jpg" % name, SDFM_image)
-                counter += 1
+# stop the timer and display FPS information
+fps.stop()
+print("===========================")
+print("[INFO] Elasped time: {:.2f}".format(fps.elapsed()))
+print("[INFO] Approx. FPS: {:.2f}".format(fps.fps()))
+
+# [Clean Up] close any open windows
+cv2.destroyAllWindows()
