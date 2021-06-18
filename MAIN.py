@@ -76,7 +76,7 @@ while True:
     # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
     (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
 
-    # --------------------- DISPLAY SOCIAL DISTANCE VIDEO ----------------
+    # ----------------- DISPLAY/WRITE SOCIAL DISTANCE VIDEO --------------
     # check to see if the output frame should be displayed to our screen
     if args["display"] > 0:
         # show the output frame
@@ -104,10 +104,12 @@ while True:
     for i in sd_images:
         # proceed only if the image is bigger than 1x1
         if i.shape[0] > 1 and i.shape[1] > 1:
-            # get images of mask violators
+            # get the image of mask violator's face
             SDFM_image = M_detector(i, faceNet, maskNet)
 
-            # save the image as a JPEG file
-            name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
-            cv2.imwrite("%s.jpg" % name, SDFM_image)
-            counter += 1
+            # proceed only if SDFM_image is defined
+            if SDFM_image is not None:
+                # save the image as a JPEG file
+                name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
+                cv2.imwrite("%s.jpg" % name, SDFM_image)
+                counter += 1
