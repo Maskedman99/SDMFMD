@@ -80,7 +80,8 @@ while True:
     # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
     (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
 
-    # ------------------- CALL FACE-MASK DETECTOR ------------------------
+    # ------------------- CALL FACE-MASK DETECTOR ------------------------ 
+    sound_flag = False
     # loop through the images of social distance violators
     for i in sd_images:
         # proceed only if the image is bigger than 1x1
@@ -94,6 +95,13 @@ while True:
                 name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
                 cv2.imwrite("%s.jpg" % name, SDFM_image)
                 counter += 1
+                sound_flag = True
+  
+    # if PLAY_ALARM and sound_flag is set, play sound
+    if config.PLAY_ALARM and sound_flag:
+        # aplay is an ALSA command, ALSA comes pre-installed in almost all linux distros
+        # os.P_NOWAIT -> don't wait for os to complete execution, so we don't lose fps.
+        os.spawnlp(os.P_NOWAIT, 'aplay', 'aplay', '-qd', '1', config.SOUND_FILE)
 
     # ----------------- DISPLAY/WRITE SOCIAL DISTANCE VIDEO --------------
     # check to see if the output frame should be displayed to our screen
