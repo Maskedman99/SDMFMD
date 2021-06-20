@@ -6,7 +6,7 @@ import numpy as np
 import imutils
 import cv2
 
-def SD_detector(net, ln, personIdx, frame):
+def SD_detector(net, ln, personIdx, frame,min_distance):
     # resize the frame and then detect people (and only people) in it
     frame = imutils.resize(frame, width=1000)
     # results = list of [confidence, bounding box coordinates, centeroid]
@@ -30,7 +30,8 @@ def SD_detector(net, ln, personIdx, frame):
             for j in range(i + 1, D.shape[1]):
                 # check to see if the distance between any two
                 # centroid pairs is less than the configured number of pixels
-                if D[i, j] < config.MIN_DISTANCE:
+                #if D[i, j] < config.MIN_DISTANCE:
+                if D[i, j] < min_distance:
                     # update the violation set with the indexes of the centroid pairs
                     violate.add(i)
                     violate.add(j)

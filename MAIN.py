@@ -11,6 +11,9 @@ from tensorflow.keras.models import load_model
 from datetime import datetime
 from imutils.video import FPS
 import tkinter as tk
+from tkinter import *
+from tkinter.ttk import *
+from PIL import ImageTk, Image
 from tkinter import filedialog as fd
 import argparse
 import cv2
@@ -82,7 +85,7 @@ def startMainFunction():
             break
 
         # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
-        (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
+        (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame,min_distance)
 
         # ------------------- CALL FACE-MASK DETECTOR ------------------------ 
         sound_flag = False
@@ -147,9 +150,18 @@ inputFile = ""
 outputDirectory = ""
 
 root=tk.Tk()    
+root.title("MaskedMan Surveilance")
+root.geometry("626x417")
+root.grid_columnconfigure((0, 1, 2), weight=1)
 
-ent1=tk.Entry(root,font=40)
-ent1.grid(row=2,column=0)
+# background_image = Image.open('background.png')
+# bg_img = ImageTk.PhotoImage(background_image)
+# background_label = tk.Label(root, image = bg_img)
+# background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+image = Image.open('browsing.png')
+image = image.resize((30,30), Image.ANTIALIAS)
+my_img = ImageTk.PhotoImage(image)
 
 def browsefunc():
     global inputFile
@@ -165,21 +177,35 @@ def askdir():
     outputDirectory = fd.askdirectory()
     ent2.insert(tk.END, outputDirectory) # add this
 
-b1=tk.Button(root,text="Browse",font=40,command=browsefunc)
-b1.grid(row=2,column=1)
+input_file_label = tk.Label(root, text = 'Input File', font=('calibre',10, 'bold'))
+input_file_label.grid(row = 0, column= 0,pady=(100,0))
 
-name_label = tk.Label(root, text = 'Minimum Pixel', font=('calibre',10, 'bold'))
-name_entry = tk.Entry(root, font=('calibre',10,'normal'))
-name_label.grid(row=3,column=0)
-name_entry.grid(row=3,column=1)
+ent1=tk.Entry(root,font=40)
+ent1.grid(row=0,column=1,sticky="ew",pady=(100,0))
+
+b1=tk.Button(root,image=my_img,font=40,command=browsefunc,pady=10,padx=10)
+b1.grid(row=0,column=2,sticky="nw",pady=(100,0),padx=(10,0))
+
+
+
+min_distance_label = tk.Label(root, text = 'Minimum Pixel', font=('calibre',10, 'bold'))
+min_distance_entry = tk.Entry(root, font=('calibre',10,'normal'))
+min_distance_label.grid(row=2,column=0,pady=(10,0))
+min_distance_entry.grid(row=2,column=1,sticky="nw",pady=(10,0))
+
+min_distance = min_distance_entry.get()
+
+output_directory_label = tk.Label(root, text = 'Output Directory', font=('calibre',10, 'bold'))
+output_directory_label.grid(row = 4, column= 0,pady=(10,0))
+
 
 ent2=tk.Entry(root,font=40)
-ent2.grid(row=4,column=0)
+ent2.grid(row=4,column=1,sticky="ew",pady=(10,0))
 
-b1=tk.Button(root,text="Output",font=40,command=askdir)
-b1.grid(row=4,column=1)
+b2=tk.Button(root,image=my_img,font=40,command=askdir,pady=10,padx=10)
+b2.grid(row=4,column=2,sticky="nw",pady=(10,0),padx=(10,0))
 
 
-b1=tk.Button(root,text="Run",font=40,command=startMainFunction)
-b1.grid(row=5)
+b3=tk.Button(root,text="Run",font=70,command=startMainFunction)
+b3.grid(row = 7,column=1,pady=(50,0))
 root.mainloop()
