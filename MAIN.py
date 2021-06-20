@@ -10,6 +10,8 @@ from mask_detector import M_detector
 from tensorflow.keras.models import load_model
 from datetime import datetime
 from imutils.video import FPS
+import tkinter as tk
+from tkinter import filedialog as fd
 import argparse
 import cv2
 import os
@@ -60,80 +62,124 @@ ln = net.getLayerNames()
 ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
 # ----------------------- VIDEO STREAM -----------------------------------
-# initialize the video stream and pointer to output video file
-print("[INFO] accessing video stream...")
-vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
-writer = None
-counter = 0
+# initialize the video stream and pointer to output video file.
+def startMainFunction():
+    print("[INFO] accessing video stream...")
+    #vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
+    vs = cv2.VideoCapture(inputFile)
+    writer = None
+    counter = 0
 
-# start the FPS counter
-fps = FPS().start()
+    # start the FPS counter
+    fps = FPS().start()
 
-# loop over the frames from the video stream
-while True:
-    # read the next frame from the file
-    (grabbed, frame) = vs.read()
-    # if the frame was not grabbed, then we have reached the end of the stream
-    if not grabbed:
-        break
-
-    # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
-    (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
-
-    # ------------------- CALL FACE-MASK DETECTOR ------------------------ 
-    sound_flag = False
-    # loop through the images of social distance violators
-    for i in sd_images:
-        # proceed only if the image is bigger than 1x1
-        if i.shape[0] > 1 and i.shape[1] > 1:
-            # get the image of mask violator's face
-            SDFM_image = M_detector(i, faceNet, maskNet)
-
-            # proceed only if SDFM_image is defined
-            if SDFM_image is not None:
-                # save the image as a JPEG file
-                name = os.path.join("OUTPUT", datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
-                cv2.imwrite("%s.jpg" % name, SDFM_image)
-                counter += 1
-                sound_flag = True
-  
-    # if PLAY_ALARM and sound_flag is set, play sound
-    if config.PLAY_ALARM and sound_flag:
-        # aplay is an ALSA command, ALSA comes pre-installed in almost all linux distros
-        # os.P_NOWAIT -> don't wait for os to complete execution, so we don't lose fps.
-        os.spawnlp(os.P_NOWAIT, 'aplay', 'aplay', '-qd', '1', config.SOUND_FILE)
-
-    # ----------------- DISPLAY/WRITE SOCIAL DISTANCE VIDEO --------------
-    # check to see if the output frame should be displayed to our screen
-    if args["display"] > 0:
-        # show the output frame
-        cv2.imshow("Frame", sd_frame)
-        key = cv2.waitKey(1) & 0xFF
-
-        # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
+    # loop over the frames from the video stream
+    while True:
+        # read the next frame from the file
+        (grabbed, frame) = vs.read()
+        # if the frame was not grabbed, then we have reached the end of the stream
+        if not grabbed:
             break
 
-    # if an output video file path has been supplied and the video
-    # writer has not been initialized, do so now
-    if args["output"] != "" and writer is None:
-        # initialize our video writer
-        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-        writer = cv2.VideoWriter(args["output"], fourcc, 25,
-	(sd_frame.shape[1], sd_frame.shape[0]), True)
+        # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
+        (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame)
 
-    # if the video writer is not None, write the frame to the output video file
-    if writer is not None:
-        writer.write(sd_frame)
+        # ------------------- CALL FACE-MASK DETECTOR ------------------------ 
+        sound_flag = False
+        # loop through the images of social distance violators
+        for i in sd_images:
+            # proceed only if the image is bigger than 1x1
+            if i.shape[0] > 1 and i.shape[1] > 1:
+                # get the image of mask violator's face
+                SDFM_image = M_detector(i, faceNet, maskNet)
 
-    # update the FPS counter
-    fps.update()
+                # proceed only if SDFM_image is defined
+                if SDFM_image is not None:
+                    # save the image as a JPEG file
+                    name = os.path.join(outputDirectory, datetime.now().strftime("%Y_%m_%d_%H_%M_%S-") + str(counter))
+                    cv2.imwrite("%s.jpg" % name, SDFM_image)
+                    counter += 1
+                    sound_flag = True
+  
+        # if PLAY_ALARM and sound_flag is set, play sound
+        if config.PLAY_ALARM and sound_flag:
+            # aplay is an ALSA command, ALSA comes pre-installed in almost all linux distros
+            # os.P_NOWAIT -> don't wait for os to complete execution, so we don't lose fps.
+            os.spawnlp(os.P_NOWAIT, 'aplay', 'aplay', '-qd', '1', config.SOUND_FILE)
 
-# stop the timer and display FPS information
-fps.stop()
-print("===========================")
-print("[INFO] Elasped time: {:.2f}".format(fps.elapsed()))
-print("[INFO] Approx. FPS: {:.2f}".format(fps.fps()))
+        # ----------------- DISPLAY/WRITE SOCIAL DISTANCE VIDEO --------------
+        # check to see if the output frame should be displayed to our screen
+        if args["display"] > 0:
+            # show the output frame
+            cv2.imshow("Frame", sd_frame)
+            key = cv2.waitKey(1) & 0xFF
 
-# [Clean Up] close any open windows
-cv2.destroyAllWindows()
+            # if the `q` key was pressed, break from the loop
+            if key == ord("q"):
+                break
+
+        # if an output video file path has been supplied and the video
+        # writer has not been initialized, do so now
+        if args["output"] != "" and writer is None:
+            # initialize our video writer
+            fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+            writer = cv2.VideoWriter(args["output"], fourcc, 25,
+	    (sd_frame.shape[1], sd_frame.shape[0]), True)
+
+        # if the video writer is not None, write the frame to the output video file
+        if writer is not None:
+            writer.write(sd_frame)
+
+        # update the FPS counter
+        fps.update()
+
+    # stop the timer and display FPS information
+    fps.stop()
+    print("===========================")
+    print("[INFO] Elasped time: {:.2f}".format(fps.elapsed()))
+    print("[INFO] Approx. FPS: {:.2f}".format(fps.fps()))
+
+    # [Clean Up] close any open windows
+    cv2.destroyAllWindows()
+
+
+inputFile = ""
+outputDirectory = ""
+
+root=tk.Tk()    
+
+ent1=tk.Entry(root,font=40)
+ent1.grid(row=2,column=0)
+
+def browsefunc():
+    global inputFile
+    inputFile = fd.askopenfilename(filetypes=(("all video format", ".mp4"),
+                    ("all video format", ".flv"),
+                    ("all video format", ".mkv"),
+                    ("all video format", ".wmv"),
+                    ("all video format", ".avi")))
+    ent1.insert(tk.END, inputFile) # add this
+
+def askdir():
+    global outputDirectory
+    outputDirectory = fd.askdirectory()
+    ent2.insert(tk.END, outputDirectory) # add this
+
+b1=tk.Button(root,text="Browse",font=40,command=browsefunc)
+b1.grid(row=2,column=1)
+
+name_label = tk.Label(root, text = 'Minimum Pixel', font=('calibre',10, 'bold'))
+name_entry = tk.Entry(root, font=('calibre',10,'normal'))
+name_label.grid(row=3,column=0)
+name_entry.grid(row=3,column=1)
+
+ent2=tk.Entry(root,font=40)
+ent2.grid(row=4,column=0)
+
+b1=tk.Button(root,text="Output",font=40,command=askdir)
+b1.grid(row=4,column=1)
+
+
+b1=tk.Button(root,text="Run",font=40,command=startMainFunction)
+b1.grid(row=5)
+root.mainloop()
