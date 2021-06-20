@@ -64,9 +64,35 @@ if config.USE_GPU:
 ln = net.getLayerNames()
 ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
+inputFile = ""
+outputDirectory = ""
+
+
+root=tk.Tk()    
+root.title("MaskedMan Surveilance")
+root.geometry("626x417")
+root.grid_columnconfigure((0, 1, 2), weight=1)
+
+min_distance = tk.StringVar(root)
+
+
+background_image = Image.open('background.jpg')
+bg_img = ImageTk.PhotoImage(background_image)
+background_label = tk.Label(root, image = bg_img)
+background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+image = Image.open('browsing.png')
+image = image.resize((30,30), Image.ANTIALIAS)
+my_img = ImageTk.PhotoImage(image)
+
+
+
+
 # ----------------------- VIDEO STREAM -----------------------------------
 # initialize the video stream and pointer to output video file.
 def startMainFunction():
+    min_distance_var = min_distance.get()
+    min_distance_var = int(min_distance_var)
     print("[INFO] accessing video stream...")
     #vs = cv2.VideoCapture(args["input"] if args["input"] else 0)
     vs = cv2.VideoCapture(inputFile)
@@ -85,7 +111,7 @@ def startMainFunction():
             break
 
         # ----------------- CALL SOCIAL DISTANCE DETECTOR -------------------- 
-        (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame,min_distance)
+        (sd_frame, sd_images) = SD_detector(net, ln, personIdx, frame,min_distance_var)
 
         # ------------------- CALL FACE-MASK DETECTOR ------------------------ 
         sound_flag = False
@@ -146,22 +172,7 @@ def startMainFunction():
     cv2.destroyAllWindows()
 
 
-inputFile = ""
-outputDirectory = ""
 
-root=tk.Tk()    
-root.title("MaskedMan Surveilance")
-root.geometry("626x417")
-root.grid_columnconfigure((0, 1, 2), weight=1)
-
-# background_image = Image.open('background.png')
-# bg_img = ImageTk.PhotoImage(background_image)
-# background_label = tk.Label(root, image = bg_img)
-# background_label.place(x=0, y=0, relwidth=1, relheight=1)
-
-image = Image.open('browsing.png')
-image = image.resize((30,30), Image.ANTIALIAS)
-my_img = ImageTk.PhotoImage(image)
 
 def browsefunc():
     global inputFile
@@ -189,11 +200,10 @@ b1.grid(row=0,column=2,sticky="nw",pady=(100,0),padx=(10,0))
 
 
 min_distance_label = tk.Label(root, text = 'Minimum Pixel', font=('calibre',10, 'bold'))
-min_distance_entry = tk.Entry(root, font=('calibre',10,'normal'))
+min_distance_entry = tk.Entry(root,textvariable = min_distance, font=('calibre',10,'normal'))
 min_distance_label.grid(row=2,column=0,pady=(10,0))
 min_distance_entry.grid(row=2,column=1,sticky="nw",pady=(10,0))
 
-min_distance = min_distance_entry.get()
 
 output_directory_label = tk.Label(root, text = 'Output Directory', font=('calibre',10, 'bold'))
 output_directory_label.grid(row = 4, column= 0,pady=(10,0))
